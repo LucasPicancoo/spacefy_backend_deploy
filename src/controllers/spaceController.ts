@@ -14,12 +14,18 @@ export const getAllSpaces = async (req: Request, res: Response) => {
 
     if (!spaces) {
       res.status(404).json({ error: "Nenhum espaço encontrado" });
+      return;
     }
 
     res.status(200).json(spaces);
-  } catch (error) {
+    return;
+  } catch (error: any) {
     console.error("Erro ao listar espaços:", error);
-    res.status(500).json({ error: "Erro ao listar espaços" });
+    res.status(500).json({ 
+      error: "Erro ao listar espaços",
+      details: error.message 
+    });
+    return;
   }
 };
 
@@ -30,13 +36,19 @@ export const getSpaceById = async (req: Request, res: Response) => {
     const space = await SpaceModel.findById(id);
 
     if (!space) {
-      return res.status(404).json({ error: "Espaço não encontrado" });
+      res.status(404).json({ error: "Espaço não encontrado" });
+      return;
     }
 
-    return res.status(200).json(space);
-  } catch (error) {
+    res.status(200).json(space);
+    return;
+  } catch (error: any) {
     console.error("Erro ao buscar espaço:", error);
-    return res.status(500).json({ error: "Erro ao buscar espaço" });
+    res.status(500).json({ 
+      error: "Erro ao buscar espaço",
+      details: error.message 
+    });
+    return;
   }
 };
 
@@ -66,7 +78,8 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
     // Validação do tipo de espaço
     if (space_type) {
       if (typeof space_type !== 'string') {
-        return res.status(400).json({ error: "O tipo de espaço deve ser uma string" });
+        res.status(400).json({ error: "O tipo de espaço deve ser uma string" });
+        return;
       }
       filter.space_type = space_type;
     }
@@ -78,7 +91,8 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
       if (min_price) {
         const minPriceNum = Number(min_price);
         if (isNaN(minPriceNum) || minPriceNum < 0) {
-          return res.status(400).json({ error: "O preço mínimo deve ser um número positivo" });
+          res.status(400).json({ error: "O preço mínimo deve ser um número positivo" });
+          return;
         }
         filter.price_per_hour.$gte = minPriceNum;
       }
@@ -86,10 +100,12 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
       if (max_price) {
         const maxPriceNum = Number(max_price);
         if (isNaN(maxPriceNum) || maxPriceNum < 0) {
-          return res.status(400).json({ error: "O preço máximo deve ser um número positivo" });
+          res.status(400).json({ error: "O preço máximo deve ser um número positivo" });
+          return;
         }
         if (min_price && maxPriceNum < Number(min_price)) {
-          return res.status(400).json({ error: "O preço máximo deve ser maior que o preço mínimo" });
+          res.status(400).json({ error: "O preço máximo deve ser maior que o preço mínimo" });
+          return;
         }
         filter.price_per_hour.$lte = maxPriceNum;
       }
@@ -102,7 +118,8 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
       if (min_area) {
         const minAreaNum = Number(min_area);
         if (isNaN(minAreaNum) || minAreaNum < 0) {
-          return res.status(400).json({ error: "A área mínima deve ser um número positivo" });
+          res.status(400).json({ error: "A área mínima deve ser um número positivo" });
+          return;
         }
         filter.area.$gte = minAreaNum;
       }
@@ -110,10 +127,12 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
       if (max_area) {
         const maxAreaNum = Number(max_area);
         if (isNaN(maxAreaNum) || maxAreaNum < 0) {
-          return res.status(400).json({ error: "A área máxima deve ser um número positivo" });
+          res.status(400).json({ error: "A área máxima deve ser um número positivo" });
+          return;
         }
         if (min_area && maxAreaNum < Number(min_area)) {
-          return res.status(400).json({ error: "A área máxima deve ser maior que a área mínima" });
+          res.status(400).json({ error: "A área máxima deve ser maior que a área mínima" });
+          return;
         }
         filter.area.$lte = maxAreaNum;
       }
@@ -123,7 +142,8 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
     if (min_people) {
       const minPeopleNum = Number(min_people);
       if (isNaN(minPeopleNum) || minPeopleNum < 1) {
-        return res.status(400).json({ error: "O número mínimo de pessoas deve ser um número positivo maior que zero" });
+        res.status(400).json({ error: "O número mínimo de pessoas deve ser um número positivo maior que zero" });
+        return;
       }
       filter.max_people = { $gte: minPeopleNum };
     }
@@ -131,7 +151,8 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
     // Filtro por amenities
     if (amenities) {
       if (typeof amenities !== 'string') {
-        return res.status(400).json({ error: "As comodidades devem ser enviadas como uma string separada por vírgulas" });
+        res.status(400).json({ error: "As comodidades devem ser enviadas como uma string separada por vírgulas" });
+        return;
       }
 
       // Converte a string de amenities em array, removendo espaços em branco
@@ -140,7 +161,8 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
       // Verifica se há amenities duplicadas
       const uniqueAmenities = new Set(amenitiesArray);
       if (uniqueAmenities.size !== amenitiesArray.length) {
-        return res.status(400).json({ error: "Comodidades duplicadas não são permitidas" });
+        res.status(400).json({ error: "Comodidades duplicadas não são permitidas" });
+        return;
       }
 
       // Verifica se todas as amenities solicitadas são permitidas
@@ -149,10 +171,11 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
       );
 
       if (invalidAmenities.length > 0) {
-        return res.status(400).json({
+        res.status(400).json({
           error: "Comodidades inválidas encontradas",
           invalidAmenities
         });
+        return;
       }
 
       // Adiciona o filtro para encontrar espaços que contenham TODAS as amenities solicitadas
@@ -162,7 +185,8 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
     // Filtro por regras do espaço
     if (space_rules) {
       if (typeof space_rules !== 'string') {
-        return res.status(400).json({ error: "As regras devem ser enviadas como uma string separada por vírgulas" });
+        res.status(400).json({ error: "As regras devem ser enviadas como uma string separada por vírgulas" });
+        return;
       }
 
       // Converte a string de regras em array, removendo espaços em branco
@@ -171,7 +195,8 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
       // Verifica se há regras duplicadas
       const uniqueRules = new Set(rulesArray);
       if (uniqueRules.size !== rulesArray.length) {
-        return res.status(400).json({ error: "Regras duplicadas não são permitidas" });
+        res.status(400).json({ error: "Regras duplicadas não são permitidas" });
+        return;
       }
 
       // Verifica se todas as regras solicitadas são permitidas
@@ -180,10 +205,11 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
       );
 
       if (invalidRules.length > 0) {
-        return res.status(400).json({
+        res.status(400).json({
           error: "Regras inválidas encontradas",
           invalidRules
         });
+        return;
       }
 
       // Adiciona o filtro para encontrar espaços que contenham TODAS as regras solicitadas
@@ -193,7 +219,8 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
     // Filtro por dias da semana
     if (week_days) {
       if (typeof week_days !== 'string') {
-        return res.status(400).json({ error: "Os dias da semana devem ser enviados como uma string separada por vírgulas" });
+        res.status(400).json({ error: "Os dias da semana devem ser enviados como uma string separada por vírgulas" });
+        return;
       }
 
       // Converte a string de dias em array, removendo espaços em branco
@@ -202,7 +229,8 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
       // Verifica se há dias duplicados
       const uniqueDays = new Set(daysArray);
       if (uniqueDays.size !== daysArray.length) {
-        return res.status(400).json({ error: "Dias duplicados não são permitidos" });
+        res.status(400).json({ error: "Dias duplicados não são permitidos" });
+        return;
       }
 
       // Lista de dias válidos
@@ -214,10 +242,11 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
       );
 
       if (invalidDays.length > 0) {
-        return res.status(400).json({
+        res.status(400).json({
           error: "Dias da semana inválidos encontrados",
           invalidDays
         });
+        return;
       }
 
       // Adiciona o filtro para encontrar espaços que contenham TODOS os dias solicitados
@@ -248,13 +277,19 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
     const spaces = await query;
 
     if (!spaces || spaces.length === 0) {
-      return res.status(404).json({ error: "Nenhum espaço encontrado com os filtros especificados" });
+      res.status(404).json({ error: "Nenhum espaço encontrado com os filtros especificados" });
+      return;
     }
 
-    return res.status(200).json(spaces);
-  } catch (error) {
+    res.status(200).json(spaces);
+    return;
+  } catch (error: any) {
     console.error("Erro ao buscar espaços com filtros:", error);
-    return res.status(500).json({ error: "Erro ao buscar espaços com filtros" });
+    res.status(500).json({ 
+      error: "Erro ao buscar espaços com filtros",
+      details: error.message 
+    });
+    return;
   }
 };
 
@@ -263,345 +298,315 @@ export const getSpacesWithFilters = async (req: Request, res: Response) => {
 // Criar um novo espaço
 export const createSpace = async (req: Request, res: Response) => {
   try {
-    // Para que somente locatários possam criar espaços
-    if (req.auth?.role !== "locatario") {
-      return res
-        .status(403)
-        .json({ error: "Apenas locatários podem criar espaços." });
-    }
-
-    // Verifica se o ID do usuário está disponível
-    if (!req.auth?.id) {
-      return res
-        .status(400)
-        .json({ error: "ID do usuário não encontrado na autenticação." });
-    }
-
     const {
       space_name,
+      description,
+      space_type,
+      price_per_hour,
+      area,
       max_people,
       location,
-      space_type,
-      space_description,
       space_amenities,
-      week_days,
-      opening_time,
-      closing_time,
       space_rules,
-      price_per_hour,
-      owner_name,
-      document_number,
-      document_photo,
-      space_document_photo,
-      owner_phone,
-      owner_email,
-      image_url,
+      week_days,
+      images
     } = req.body;
 
-    // Verifica se todos os campos obrigatórios foram enviados
-    if (
-      !space_name ||
-      !max_people ||
-      !location ||
-      !space_type ||
-      !price_per_hour ||
-      !space_amenities ||
-      !week_days ||
-      !opening_time ||
-      !closing_time ||
-      !owner_name ||
-      !document_number ||
-      !document_photo ||
-      !space_document_photo ||
-      !owner_phone ||
-      !owner_email ||
-      !image_url
-    ) {
-      return res
-        .status(400)
-        .json({ error: "Todos os campos obrigatórios devem ser preenchidos." });
+    // Validações básicas
+    if (!space_name || !description || !space_type || !price_per_hour || !area || !max_people || !location) {
+      res.status(400).json({ error: "Todos os campos obrigatórios devem ser preenchidos" });
+      return;
     }
 
-    // Valida o endereço usando o Google Maps API
-    const googleMapsService = new GoogleMapsService();
-    const addressValidation = await googleMapsService.validateAddress({
-      street: location.street,
-      number: location.number,
-      complement: location.complement,
-      neighborhood: location.neighborhood,
-      city: location.city,
-      state: location.state,
-      zipCode: location.zipCode
-    });
-
-    if (!addressValidation.isValid) {
-      return res.status(400).json({
-        error: "Endereço inválido",
-        details: addressValidation.error
-      });
+    // Validação de preço
+    if (price_per_hour <= 0) {
+      res.status(400).json({ error: "O preço por hora deve ser maior que zero" });
+      return;
     }
 
-    // Verifica se todas as comodidades são permitidas
-    const invalidAmenities = space_amenities.filter(
-      (amenity: string) => !ALLOWED_AMENITIES.includes(amenity)
-    );
-
-    if (invalidAmenities.length > 0) {
-      return res.status(400).json({
-        error: "Comodidades inválidas encontradas",
-        invalidAmenities
-      });
+    // Validação de área
+    if (area <= 0) {
+      res.status(400).json({ error: "A área deve ser maior que zero" });
+      return;
     }
 
-    // Verifica se todas as regras são permitidas (apenas se foram fornecidas)
-    if (space_rules && space_rules.length > 0) {
+    // Validação de número máximo de pessoas
+    if (max_people <= 0) {
+      res.status(400).json({ error: "O número máximo de pessoas deve ser maior que zero" });
+      return;
+    }
+
+    // Validação de amenities
+    if (space_amenities) {
+      const invalidAmenities = space_amenities.filter(
+        (amenity: string) => !ALLOWED_AMENITIES.includes(amenity)
+      );
+
+      if (invalidAmenities.length > 0) {
+        res.status(400).json({
+          error: "Comodidades inválidas encontradas",
+          invalidAmenities
+        });
+        return;
+      }
+    }
+
+    // Validação de regras
+    if (space_rules) {
       const invalidRules = space_rules.filter(
         (rule: string) => !ALLOWED_RULES.includes(rule)
       );
 
       if (invalidRules.length > 0) {
-        return res.status(400).json({
+        res.status(400).json({
           error: "Regras inválidas encontradas",
           invalidRules
         });
+        return;
       }
     }
 
-    // Cria um novo espaço
-    const newSpace = new SpaceModel({
-      owner_id: req.auth.id, // Adiciona o ID do usuário autenticado
-      space_name,
-      max_people,
-      location: {
-        formatted_address: addressValidation.formattedAddress,
-        place_id: addressValidation.placeId
-      },
-      space_type,
-      space_description,
-      space_amenities,
-      week_days,
-      opening_time,
-      closing_time,
-      space_rules,
-      price_per_hour,
-      owner_name,
-      document_number,
-      document_photo,
-      space_document_photo,
-      owner_phone,
-      owner_email,
-      image_url,
-    });
+    // Validação de dias da semana
+    if (week_days) {
+      const validDays = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
+      const invalidDays = week_days.filter(
+        (day: string) => !validDays.includes(day.toLowerCase())
+      );
 
-    await newSpace.save();
-    res.status(201).json(newSpace);
-  } catch (error) {
-    console.error("Erro ao criar espaço:", error);
-
-    // Verifica se o erro é de validação
-    if (error instanceof Error && error.name === "ValidationError") {
-      return res.status(400).json({ error: "Erro de validação dos campos" });
+      if (invalidDays.length > 0) {
+        res.status(400).json({
+          error: "Dias da semana inválidos encontrados",
+          invalidDays
+        });
+        return;
+      }
     }
 
-    return res.status(500).json({ error: "Erro ao criar espaço" });
+    const space = new SpaceModel({
+      space_name,
+      description,
+      space_type,
+      price_per_hour,
+      area,
+      max_people,
+      location,
+      space_amenities: space_amenities || [],
+      space_rules: space_rules || [],
+      week_days: week_days || [],
+      images: images || [],
+      owner: req.auth?.id
+    });
+
+    await space.save();
+    res.status(201).json(space);
+    return;
+  } catch (error: any) {
+    console.error("Erro ao criar espaço:", error);
+    res.status(500).json({ 
+      error: "Erro ao criar espaço",
+      details: error.message 
+    });
+    return;
   }
 };
 
 // Atualizar um espaço por ID
 export const updateSpace = async (req: Request, res: Response) => {
   try {
-    // Para que somente locatários possam atualizar espaços
-    if (req.auth?.role !== "locatario") {
-      return res
-        .status(403)
-        .json({ error: "Apenas locatários podem atualizar espaços." });
-    }
-
-    const {
-      space_name,
-      max_people,
-      location,
-      space_type,
-      price_per_hour,
-      owner_name,
-      document_number,
-      owner_phone,
-      owner_email,
-      image_url,
-    } = req.body;
-
-    // Verifica se todos os campos obrigatórios foram enviados
-    if (
-      !space_name ||
-      !max_people ||
-      !location ||
-      !space_type ||
-      !price_per_hour ||
-      !owner_name ||
-      !document_number ||
-      !owner_phone ||
-      !owner_email ||
-      !image_url
-    ) {
-      return res
-        .status(400)
-        .json({ error: "Todos os campos obrigatórios devem ser preenchidos." });
-    }
-
     const { id } = req.params;
-    const updatedSpace = await SpaceModel.findByIdAndUpdate(id, req.body, {
-      new: true,
-    });
+    const updateData = req.body;
 
-    if (!updatedSpace) {
-      return res.status(404).json({ error: "Espaço não encontrado" });
+    // Verificar se o espaço existe
+    const space = await SpaceModel.findById(id);
+    if (!space) {
+      res.status(404).json({ error: "Espaço não encontrado" });
+      return;
     }
 
-    return res.status(200).json(updatedSpace);
-  } catch (error) {
+    // Verificar se o usuário é o dono do espaço
+    if (space.owner_id.toString() !== req.auth?.id) {
+      res.status(403).json({ error: "Você não tem permissão para atualizar este espaço" });
+      return;
+    }
+
+    // Validações de campos
+    if (updateData.price_per_hour && updateData.price_per_hour <= 0) {
+      res.status(400).json({ error: "O preço por hora deve ser maior que zero" });
+      return;
+    }
+
+    if (updateData.area && updateData.area <= 0) {
+      res.status(400).json({ error: "A área deve ser maior que zero" });
+      return;
+    }
+
+    if (updateData.max_people && updateData.max_people <= 0) {
+      res.status(400).json({ error: "O número máximo de pessoas deve ser maior que zero" });
+      return;
+    }
+
+    // Validação de amenities
+    if (updateData.space_amenities) {
+      const invalidAmenities = updateData.space_amenities.filter(
+        (amenity: string) => !ALLOWED_AMENITIES.includes(amenity)
+      );
+
+      if (invalidAmenities.length > 0) {
+        res.status(400).json({
+          error: "Comodidades inválidas encontradas",
+          invalidAmenities
+        });
+        return;
+      }
+    }
+
+    // Validação de regras
+    if (updateData.space_rules) {
+      const invalidRules = updateData.space_rules.filter(
+        (rule: string) => !ALLOWED_RULES.includes(rule)
+      );
+
+      if (invalidRules.length > 0) {
+        res.status(400).json({
+          error: "Regras inválidas encontradas",
+          invalidRules
+        });
+        return;
+      }
+    }
+
+    // Validação de dias da semana
+    if (updateData.week_days) {
+      const validDays = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
+      const invalidDays = updateData.week_days.filter(
+        (day: string) => !validDays.includes(day.toLowerCase())
+      );
+
+      if (invalidDays.length > 0) {
+        res.status(400).json({
+          error: "Dias da semana inválidos encontrados",
+          invalidDays
+        });
+        return;
+      }
+    }
+
+    const updatedSpace = await SpaceModel.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+
+    res.status(200).json(updatedSpace);
+    return;
+  } catch (error: any) {
     console.error("Erro ao atualizar espaço:", error);
-
-    // Verifica se o erro é de validação do Mongoose
-    if (error instanceof Error && error.name === "ValidationError") {
-      return res.status(400).json({ error: error.message });
-    }
-
-    return res.status(500).json({ error: "Erro ao atualizar espaço" });
+    res.status(500).json({ 
+      error: "Erro ao atualizar espaço",
+      details: error.message 
+    });
+    return;
   }
 };
 
 // Excluir um espaço por ID
 export const deleteSpace = async (req: Request, res: Response) => {
   try {
-    if (!req.auth || !["locatario", "admin"].includes(req.auth.role)) {
-      return res.status(403).json({
-        error: "Apenas locatários ou administradores podem excluir espaços."
-      });
-    }
-
     const { id } = req.params;
 
-    // Add validation for ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "ID inválido" });
+    // Verificar se o espaço existe
+    const space = await SpaceModel.findById(id);
+    if (!space) {
+      res.status(404).json({ error: "Espaço não encontrado" });
+      return;
     }
 
-    const deletedSpace = await SpaceModel.findByIdAndDelete(id);
-
-    if (!deletedSpace) {
-      return res.status(404).json({ error: "Espaço não encontrado" });
+    // Verificar se o usuário é o dono do espaço
+    if (space.owner_id.toString() !== req.auth?.id) {
+      res.status(403).json({ error: "Você não tem permissão para deletar este espaço" });
+      return;
     }
 
-    return res.status(200).json({
-      message: "Espaço excluído com sucesso",
-      deletedSpace
+    await SpaceModel.findByIdAndDelete(id);
+    res.status(200).json({ message: "Espaço deletado com sucesso" });
+    return;
+  } catch (error: any) {
+    console.error("Erro ao deletar espaço:", error);
+    res.status(500).json({ 
+      error: "Erro ao deletar espaço",
+      details: error.message 
     });
-  } catch (error) {
-    console.error("Erro ao excluir espaço:", error);
-    return res.status(500).json({
-      error: "Erro ao excluir espaço",
-      details: error instanceof Error ? error.message : "Erro desconhecido"
-    });
+    return;
   }
-}
+};
 
 
 // Buscar espaços por comodidades da tela de experiência
 export const getSpacesByExperienceAmenities = async (req: Request, res: Response) => {
   try {
-    // Busca todos os espaços que tenham pelo menos uma das comodidades
-    const spaces = await SpaceModel.find({
-      space_amenities: {
-        $in: ['estacionamento', 'wifi', 'piscina', 'churrasqueira', 'ar_condicionado', 'tv']
-      }
-    })
-    .select('image_url space_name location space_amenities price_per_hour') // Adicionado price_per_hour
-    .sort({ rating: -1 }); // Ordena por avaliação
+    const { experience } = req.params;
 
-    // Organiza os espaços por comodidade e pega apenas a primeira imagem
-    const spacesByAmenity = {
-      parking: spaces
-        .filter(space => space.space_amenities.includes('estacionamento'))
-        .map(space => ({
-          ...space.toObject(),
-          image_url: Array.isArray(space.image_url) ? space.image_url[0] : space.image_url,
-          price_per_hour: space.price_per_hour
-        }))
-        .slice(0, 5),
-      wifi: spaces
-        .filter(space => space.space_amenities.includes('wifi'))
-        .map(space => ({
-          ...space.toObject(),
-          image_url: Array.isArray(space.image_url) ? space.image_url[0] : space.image_url,
-          price_per_hour: space.price_per_hour
-        }))
-        .slice(0, 5),
-      pool: spaces
-        .filter(space => space.space_amenities.includes('piscina'))
-        .map(space => ({
-          ...space.toObject(),
-          image_url: Array.isArray(space.image_url) ? space.image_url[0] : space.image_url,
-          price_per_hour: space.price_per_hour
-        }))
-        .slice(0, 5),
-      barbecue: spaces
-        .filter(space => space.space_amenities.includes('churrasqueira'))
-        .map(space => ({
-          ...space.toObject(),
-          image_url: Array.isArray(space.image_url) ? space.image_url[0] : space.image_url,
-          price_per_hour: space.price_per_hour
-        }))
-        .slice(0, 5),
-      ac: spaces
-        .filter(space => space.space_amenities.includes('ar_condicionado'))
-        .map(space => ({
-          ...space.toObject(),
-          image_url: Array.isArray(space.image_url) ? space.image_url[0] : space.image_url,
-          price_per_hour: space.price_per_hour
-        }))
-        .slice(0, 5),
-      tv: spaces
-        .filter(space => space.space_amenities.includes('tv'))
-        .map(space => ({
-          ...space.toObject(),
-          image_url: Array.isArray(space.image_url) ? space.image_url[0] : space.image_url,
-          price_per_hour: space.price_per_hour
-        }))
-        .slice(0, 5)
+    // Mapeamento de experiências para amenities
+    const experienceAmenitiesMap: { [key: string]: string[] } = {
+      'reuniao': ['wifi', 'projetor', 'ar_condicionado', 'mesa_conferencia'],
+      'evento': ['wifi', 'som', 'palco', 'mesas', 'cadeiras'],
+      'estudo': ['wifi', 'mesa_estudo', 'silencioso'],
+      'trabalho': ['wifi', 'mesa_escritorio', 'ar_condicionado'],
+      'workshop': ['wifi', 'projetor', 'mesas', 'cadeiras', 'quadro_branco']
     };
 
-    return res.status(200).json(spacesByAmenity);
-  } catch (error) {
-    console.error("Erro ao buscar espaços por comodidades:", error);
-    return res.status(500).json({
-      error: "Erro ao buscar espaços por comodidades",
-      details: error instanceof Error ? error.message : "Erro desconhecido"
+    const amenities = experienceAmenitiesMap[experience.toLowerCase()];
+    if (!amenities) {
+      res.status(400).json({ error: "Experiência não reconhecida" });
+      return;
+    }
+
+    const spaces = await SpaceModel.find({
+      space_amenities: { $all: amenities }
     });
+
+    if (!spaces || spaces.length === 0) {
+      res.status(404).json({ error: "Nenhum espaço encontrado para esta experiência" });
+      return;
+    }
+
+    res.status(200).json(spaces);
+    return;
+  } catch (error: any) {
+    console.error("Erro ao buscar espaços por experiência:", error);
+    res.status(500).json({ 
+      error: "Erro ao buscar espaços por experiência",
+      details: error.message 
+    });
+    return;
   }
 };
 
 // Buscar espaços por ID do proprietário
 export const getSpacesByOwnerId = async (req: Request, res: Response) => {
   try {
-    const { owner_id } = req.params;
+    const { ownerId } = req.params;
 
-    // Validação do ID
-    if (!mongoose.Types.ObjectId.isValid(owner_id)) {
-      return res.status(400).json({ error: "ID do proprietário inválido" });
+    if (!mongoose.Types.ObjectId.isValid(ownerId)) {
+      res.status(400).json({ error: "ID do proprietário inválido" });
+      return;
     }
 
-    const spaces = await SpaceModel.find({ owner_id });
+    const spaces = await SpaceModel.find({ owner: ownerId });
 
     if (!spaces || spaces.length === 0) {
-      return res.status(404).json({ error: "Nenhum espaço encontrado para este proprietário" });
+      res.status(404).json({ error: "Nenhum espaço encontrado para este proprietário" });
+      return;
     }
 
-    return res.status(200).json(spaces);
-  } catch (error) {
+    res.status(200).json(spaces);
+    return;
+  } catch (error: any) {
     console.error("Erro ao buscar espaços do proprietário:", error);
-    return res.status(500).json({ 
+    res.status(500).json({ 
       error: "Erro ao buscar espaços do proprietário",
-      details: error instanceof Error ? error.message : "Erro desconhecido"
+      details: error.message 
     });
+    return;
   }
 };

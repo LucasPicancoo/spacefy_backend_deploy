@@ -1,11 +1,12 @@
 import express from "express";
 import { login } from "../controllers/authController"; // certifique-se que o caminho está certo
 import { getCookie, deleteCookie } from "../controllers/authController";
+import { asyncHandler } from "../middlewares/asyncHandler";
 
 const Loginrouter = express.Router();
 
 // Rota de login
-Loginrouter.post("/login", login as express.RequestHandler);
+Loginrouter.post("/login", asyncHandler(login));
 
 // Rotas para gerenciamento de cookies
 Loginrouter.get("/get-cookie", getCookie as express.RequestHandler); // Lê um cookie

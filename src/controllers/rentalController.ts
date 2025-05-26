@@ -93,7 +93,8 @@ export const createRental = async (req: Request, res: Response) => {
     const { userId, spaceId, start_date, end_date, startTime, endTime, value } = req.body;
 
     if (!userId || !spaceId || !start_date || !end_date || !startTime || !endTime || !value) {
-      return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+      res.status(400).json({ error: "Todos os campos são obrigatórios." });
+      return;
     }
 
     // Validar IDs
@@ -101,7 +102,8 @@ export const createRental = async (req: Request, res: Response) => {
       !mongoose.Types.ObjectId.isValid(userId) ||
       !mongoose.Types.ObjectId.isValid(spaceId)
     ) {
-      return res.status(400).json({ error: "ID inválido." });
+      res.status(400).json({ error: "ID inválido." });
+      return;
     }
 
     // Converter as datas para o formato correto
@@ -132,9 +134,10 @@ export const createRental = async (req: Request, res: Response) => {
           endTime
         )
       ) {
-        return res.status(409).json({
+        res.status(409).json({
           error: "Conflito de horário: já existe um aluguel nesse espaço neste período.",
         });
+        return;
       }
     }
 
@@ -149,10 +152,15 @@ export const createRental = async (req: Request, res: Response) => {
     });
 
     await rental.save();
-    return res.status(201).json(rental);
-  } catch (error) {
+    res.status(201).json(rental);
+    return;
+  } catch (error: any) {
     console.error("Erro ao criar aluguel:", error);
-    return res.status(500).json({ error: "Erro interno ao criar aluguel." });
+    res.status(500).json({ 
+      error: "Erro interno ao criar aluguel.",
+      details: error.message 
+    });
+    return;
   }
 };
 
@@ -172,10 +180,15 @@ export const getAllRentals = async (req: Request, res: Response) => {
       .populate("user", "name email")
       .populate("space", "name location");
 
-    return res.status(200).json(rentals);
-  } catch (error) {
+    res.status(200).json(rentals);
+    return;
+  } catch (error: any) {
     console.error("Erro ao buscar aluguéis:", error);
-    return res.status(500).json({ error: "Erro interno ao buscar aluguéis." });
+    res.status(500).json({ 
+      error: "Erro interno ao buscar aluguéis.",
+      details: error.message 
+    });
+    return;
   }
 };
 
@@ -185,16 +198,22 @@ export const getRentalsByUser = async (req: Request, res: Response) => {
     const { userId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ error: "ID de usuário inválido." });
+      res.status(400).json({ error: "ID de usuário inválido." });
+      return;
     }
 
     const rentals = await RentalModel.find({ user: userId })
       .populate("space", "space_name image_url price_per_hour location");
 
-    return res.status(200).json(rentals);
-  } catch (error) {
+    res.status(200).json(rentals);
+    return;
+  } catch (error: any) {
     console.error("Erro ao buscar aluguéis do usuário:", error);
-    return res.status(500).json({ error: "Erro interno ao buscar aluguéis." });
+    res.status(500).json({ 
+      error: "Erro interno ao buscar aluguéis.",
+      details: error.message 
+    });
+    return;
   }
 };
 
@@ -204,19 +223,26 @@ export const deleteRental = async (req: Request, res: Response) => {
     const { rentalId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(rentalId)) {
-      return res.status(400).json({ error: "ID de aluguel inválido." });
+      res.status(400).json({ error: "ID de aluguel inválido." });
+      return;
     }
 
     const deleted = await RentalModel.findByIdAndDelete(rentalId);
 
     if (!deleted) {
-      return res.status(404).json({ error: "Aluguel não encontrado." });
+      res.status(404).json({ error: "Aluguel não encontrado." });
+      return;
     }
 
-    return res.status(200).json({ message: "Aluguel deletado com sucesso." });
-  } catch (error) {
+    res.status(200).json({ message: "Aluguel deletado com sucesso." });
+    return;
+  } catch (error: any) {
     console.error("Erro ao deletar aluguel:", error);
-    return res.status(500).json({ error: "Erro interno ao deletar aluguel." });
+    res.status(500).json({ 
+      error: "Erro interno ao deletar aluguel.",
+      details: error.message 
+    });
+    return;
   }
 };
 
@@ -226,14 +252,16 @@ export const getRentedDatesBySpace = async (req: Request, res: Response) => {
     const { spaceId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(spaceId)) {
-      return res.status(400).json({ error: "ID de espaço inválido." });
+      res.status(400).json({ error: "ID de espaço inválido." });
+      return;
     }
 
     const rentals = await RentalModel.find({ space: spaceId })
       .select('start_date end_date');
 
     if (!rentals.length) {
-      return res.status(200).json({ dates: [] });
+      res.status(200).json({ dates: [] });
+      return;
     }
 
     // Gerar array com todas as datas reservadas
@@ -246,9 +274,14 @@ export const getRentedDatesBySpace = async (req: Request, res: Response) => {
     const uniqueDates = [...new Set(allRentedDates.map(date => date.toISOString().split('T')[0]))]
       .sort();
 
-    return res.status(200).json({ dates: uniqueDates });
-  } catch (error) {
+    res.status(200).json({ dates: uniqueDates });
+    return;
+  } catch (error: any) {
     console.error("Erro ao buscar datas reservadas:", error);
-    return res.status(500).json({ error: "Erro interno ao buscar datas reservadas." });
+    res.status(500).json({ 
+      error: "Erro interno ao buscar datas reservadas.",
+      details: error.message 
+    });
+    return;
   }
 };
