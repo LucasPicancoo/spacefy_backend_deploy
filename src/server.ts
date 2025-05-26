@@ -29,6 +29,11 @@ app.use("/view-history", viewHistoryRouter);
 app.use("/rentals", rentalRoutes); // ✅ Rota de aluguéis adicionada
 app.use("/assessment", assessmentRoutes);
 
+// Rota principal
+app.get("/", (req, res) => {
+  res.send("API está rodando! 🚀");
+});
+
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 
